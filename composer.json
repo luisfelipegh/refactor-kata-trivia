@@ -1,0 +1,26 @@
+{
+  "name": "luisfelipegh/refactor-game",
+  "description": "Refactor Game ",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "luisfelipegarciaherrera",
+      "email": "luisfelipegarciacsj@gmail.com"
+    }
+  ],
+  "require": {
+    "phpunit/phpunit": "^9.4",
+    "friendsofphp/php-cs-fixer": "^2.16"
+  },
+  "autoload": {
+    "psr-4": {
+      "RefactorGame\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  }
+}
