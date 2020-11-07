@@ -4,7 +4,7 @@ namespace PhpCsFixer;
 
 $finder = Finder::create()
     ->name('*.php')
-    ->in(__DIR__.DIRECTORY_SEPARATOR.'app')
+    ->in(__DIR__.DIRECTORY_SEPARATOR.'src')
     ->in(__DIR__.DIRECTORY_SEPARATOR.'tests')
 ;
 
