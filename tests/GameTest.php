@@ -53,7 +53,7 @@ class GameTest extends TestCase
         ob_start();
         $this->game->addPlayer($playerName);
 
-        $this->assertEquals(ob_get_clean(), "{$playerName} was added\nThey are player number 1\n");
+        $this->assertEquals("{$playerName} was added\nThey are player number 1\n", ob_get_clean());
     }
 
     public function testAssertPlayersIsPlaying()
@@ -191,7 +191,6 @@ class GameTest extends TestCase
         $this->game->wasCorrectlyAnswered();
 
         $this->assertEquals(0, $this->game->currentPlayer);
-        //$this->assertStringContainsString("Answer was corrent!!!!", ob_get_clean());
     }
 
     /**

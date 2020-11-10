@@ -95,7 +95,7 @@ class Game
 
     public function didPlayerWin()
     {
-        return !($this->getCurrentPlayer()->getPurses() == self::MAX_VALUE_PLACES);
+        return !(self::MAX_VALUE_PLACES === $this->getCurrentPlayer()->getPurses());
     }
 
     public function getCurrentPlayer(): Player
