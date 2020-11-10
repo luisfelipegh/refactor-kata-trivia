@@ -1,66 +1,39 @@
 <?php
 
-function echoln($string)
-{
-    echo $string."\n";
-}
+namespace RefactorGame;
+
+use RefactorGame\Helpers\Categories;
+use RefactorGame\Helpers\Logger;
 
 class Game
 {
-    public $players;
-    public $places;
-    public $purses ;
-    public $inPenaltyBox ;
+    public const MINIMUM_PLAYERS = 2;
+    public const MAX_VALUE_PLACES = 6;
+    public const LENGTH_BOARD = 12;
+    public const INITIAL_POSITION = 0;
 
-    public $popQuestions;
-    public $scienceQuestions;
-    public $sportsQuestions;
-    public $rockQuestions;
+    public array $players = [];
+    public array $categories = [];
 
     public $currentPlayer = 0;
-    public $isGettingOutOfPenaltyBox;
 
     public function __construct()
     {
         $this->players = [];
-        $this->places = [0];
-        $this->purses  = [0];
-        $this->inPenaltyBox  = [0];
-
-        $this->popQuestions = [];
-        $this->scienceQuestions = [];
-        $this->sportsQuestions = [];
-        $this->rockQuestions = [];
-
-        for ($i = 0; $i < 50; $i++) {
-            array_push($this->popQuestions, "Pop Question " . $i);
-            array_push($this->scienceQuestions, ("Science Question " . $i));
-            array_push($this->sportsQuestions, ("Sports Question " . $i));
-            array_push($this->rockQuestions, $this->createRockQuestion($i));
-        }
-    }
-
-    public function createRockQuestion($index)
-    {
-        return "Rock Question " . $index;
+        $this->categories = Categories::createCategories();
     }
 
     public function isPlayable()
     {
-        return ($this->howManyPlayers() >= 2);
+        return ($this->howManyPlayers() >= self::MINIMUM_PLAYERS);
     }
 
-    public function add($playerName)
+    public function addPlayer(string $name)
     {
-        array_push($this->players, $playerName);
-        $this->places[$this->howManyPlayers()] = 0;
-        $this->purses[$this->howManyPlayers()] = 0;
-        $this->inPenaltyBox[$this->howManyPlayers()] = false;
+        $player = new Player($name, self::INITIAL_POSITION);
+        array_push($this->players, $player);
 
-        echoln($playerName . " was added");
-        echoln("They are player number " . count($this->players));
-
-        return true;
+        Logger::newPlayer($player, $this->howManyPlayers());
     }
 
     public function howManyPlayers()
@@ -70,151 +43,84 @@ class Game
 
     public function roll($roll)
     {
-        echoln($this->players[$this->currentPlayer] . " is the current player");
-        echoln("They have rolled a " . $roll);
+        $player = $this->getCurrentPlayer();
+        Logger::currentPlayer($player, $roll);
 
-        if ($this->inPenaltyBox[$this->currentPlayer]) {
-            if ($roll % 2 != 0) {
-                $this->isGettingOutOfPenaltyBox = true;
+        $player->gettingOutOfPenaltyBox($roll % 2 != 0);
+        if ($player->isInPenaltyBox() && !$player->isGettingOutOfPenaltyBox()) {
+            Logger::isNotGettingOutOfPenalty($player);
 
-                echoln($this->players[$this->currentPlayer] . " is getting out of the penalty box");
-                $this->places[$this->currentPlayer] = $this->places[$this->currentPlayer] + $roll;
-                if ($this->places[$this->currentPlayer] > 11) {
-                    $this->places[$this->currentPlayer] = $this->places[$this->currentPlayer] - 12;
-                }
-
-                echoln($this->players[$this->currentPlayer]
-                    . "'s new location is "
-                    .$this->places[$this->currentPlayer]);
-                echoln("The category is " . $this->currentCategory());
-                $this->askQuestion();
-            } else {
-                echoln($this->players[$this->currentPlayer] . " is not getting out of the penalty box");
-                $this->isGettingOutOfPenaltyBox = false;
-            }
-        } else {
-            $this->places[$this->currentPlayer] = $this->places[$this->currentPlayer] + $roll;
-            if ($this->places[$this->currentPlayer] > 11) {
-                $this->places[$this->currentPlayer] = $this->places[$this->currentPlayer] - 12;
-            }
-
-            echoln($this->players[$this->currentPlayer]
-                . "'s new location is "
-                .$this->places[$this->currentPlayer]);
-            echoln("The category is " . $this->currentCategory());
-            $this->askQuestion();
+            return;
         }
+        if ($player->isInPenaltyBox()) {
+            Logger::isGettingOutOfPenalty($player);
+        }
+
+        $this->playTurn($roll);
     }
 
-    public function askQuestion()
+    public function askQuestion(Category $category): void
     {
-        if ($this->currentCategory() == "Pop") {
-            echoln(array_shift($this->popQuestions));
-        }
-        if ($this->currentCategory() == "Science") {
-            echoln(array_shift($this->scienceQuestions));
-        }
-        if ($this->currentCategory() == "Sports") {
-            echoln(array_shift($this->sportsQuestions));
-        }
-        if ($this->currentCategory() == "Rock") {
-            echoln(array_shift($this->rockQuestions));
-        }
+        Logger::question($category->getQuestion());
     }
 
-    public function currentCategory()
+    public function currentCategory($position): Category
     {
-        if ($this->places[$this->currentPlayer] == 0) {
-            return "Pop";
-        }
-        if ($this->places[$this->currentPlayer] == 4) {
-            return "Pop";
-        }
-        if ($this->places[$this->currentPlayer] == 8) {
-            return "Pop";
-        }
-        if ($this->places[$this->currentPlayer] == 1) {
-            return "Science";
-        }
-        if ($this->places[$this->currentPlayer] == 5) {
-            return "Science";
-        }
-        if ($this->places[$this->currentPlayer] == 9) {
-            return "Science";
-        }
-        if ($this->places[$this->currentPlayer] == 2) {
-            return "Sports";
-        }
-        if ($this->places[$this->currentPlayer] == 6) {
-            return "Sports";
-        }
-        if ($this->places[$this->currentPlayer] == 10) {
-            return "Sports";
-        }
+        $categories = array_keys($this->categories);
 
-        return "Rock";
+        return $this->categories[$categories[($position % 4)]];
     }
 
     public function wasCorrectlyAnswered()
     {
-        if ($this->inPenaltyBox[$this->currentPlayer]) {
-            if ($this->isGettingOutOfPenaltyBox) {
-                echoln("Answer was correct!!!!");
-                $this->purses[$this->currentPlayer]++;
-                echoln($this->players[$this->currentPlayer]
-                    . " now has "
-                    .$this->purses[$this->currentPlayer]
-                    . " Gold Coins.");
-
-                $winner = $this->didPlayerWin();
-                $this->currentPlayer++;
-                if ($this->currentPlayer == count($this->players)) {
-                    $this->currentPlayer = 0;
-                }
-
-                return $winner;
-            } else {
-                $this->currentPlayer++;
-                if ($this->currentPlayer == count($this->players)) {
-                    $this->currentPlayer = 0;
-                }
-
-                return true;
-            }
-        } else {
-            echoln("Answer was corrent!!!!");
-            $this->purses[$this->currentPlayer]++;
-            echoln($this->players[$this->currentPlayer]
-                . " now has "
-                .$this->purses[$this->currentPlayer]
-                . " Gold Coins.");
-
-            $winner = $this->didPlayerWin();
-            $this->currentPlayer++;
-            if ($this->currentPlayer == count($this->players)) {
-                $this->currentPlayer = 0;
-            }
-
-            return $winner;
+        $isInPenaltyBox = $this->getCurrentPlayer()->isInPenaltyBox();
+        if (!$isInPenaltyBox || $this->getCurrentPlayer()->isGettingOutOfPenaltyBox()) {
+            $this->getCurrentPlayer()->winPurses();
+            Logger::correctAnswer($this->getCurrentPlayer());
         }
+
+        $this->nextPlayer();
+
+        return $this->didPlayerWin();
     }
 
     public function wrongAnswer()
     {
-        echoln("Question was incorrectly answered");
-        echoln($this->players[$this->currentPlayer] . " was sent to the penalty box");
-        $this->inPenaltyBox[$this->currentPlayer] = true;
+        $player = $this->getCurrentPlayer();
+        Logger::wrongAnswer($player);
+        $player->goToPenaltyBox();
 
-        $this->currentPlayer++;
-        if ($this->currentPlayer == count($this->players)) {
-            $this->currentPlayer = 0;
-        }
-
-        return true;
+        return false;
     }
 
     public function didPlayerWin()
     {
-        return !($this->purses[$this->currentPlayer] == 6);
+        return !($this->getCurrentPlayer()->getPurses() == self::MAX_VALUE_PLACES);
+    }
+
+    public function getCurrentPlayer(): Player
+    {
+        return $this->players[$this->currentPlayer];
+    }
+
+    /**
+     * @param $roll
+     */
+    private function playTurn($roll)
+    {
+        $player = $this->getCurrentPlayer();
+        $player->move($roll);
+
+        $currentCategory = $this->currentCategory($player->getPosition());
+        Logger::move($player, $currentCategory);
+        $this->askQuestion($currentCategory);
+    }
+
+    private function nextPlayer(): void
+    {
+        $this->currentPlayer++;
+        if ($this->currentPlayer == $this->howManyPlayers()) {
+            $this->currentPlayer = 0;
+        }
     }
 }

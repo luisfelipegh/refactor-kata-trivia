@@ -10,6 +10,7 @@
     }
   ],
   "require": {
+    "php" : "^7.2",
     "phpunit/phpunit": "^9.4",
     "friendsofphp/php-cs-fixer": "^2.16"
   },
